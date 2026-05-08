@@ -1,6 +1,8 @@
 package com.mustafaderinoz.ticketapp
 
 import android.app.Application
+import com.mustafaderinoz.data.di.dataModule
+import com.mustafaderinoz.ticketapp.di.appModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -13,7 +15,8 @@ class TicketAppAplication:Application(){
             androidLogger()
             androidContext(this@TicketAppAplication)
             modules(
-
+                dataModule,
+                appModule
             )
         }
     }
