@@ -4,6 +4,4 @@ Bir ekranda Koin kullanarak `AuthRepository` sınıfını dependency injection i
 
 ## Çıktı
 
-```
-![](screenshots/odev1.jpeg)
-```
+<img src="screenshots/odev1.jpeg" width="250"/>
