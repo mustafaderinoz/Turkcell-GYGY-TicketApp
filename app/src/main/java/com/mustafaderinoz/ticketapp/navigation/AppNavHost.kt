@@ -7,7 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mustafaderinoz.ticketapp.screen.LoginScreen
-
+import com.mustafaderinoz.ticketapp.screen.RegisterScreen
 
 
 @Composable
@@ -24,7 +24,12 @@ fun AppNavHost(
             )
         }
         composable<Register> {
-            Text("Register Screen")
+            RegisterScreen(
+                onRegisterSuccess = { navController.navigate(Login) {
+                    popUpTo(Register) { inclusive = true }
+                }},
+                onNavigateToLogin = { navController.popBackStack() }
+            )
         }
     }
 }
