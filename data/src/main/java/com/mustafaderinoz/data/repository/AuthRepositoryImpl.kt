@@ -5,15 +5,17 @@ import com.mustafaderinoz.core.domain.AuthSession
 import com.mustafaderinoz.core.domain.User
 import com.mustafaderinoz.core.domain.UserRole
 import com.mustafaderinoz.data.dto.CredentialsDto
+import com.mustafaderinoz.data.local.TokenStore
 import com.mustafaderinoz.data.remote.AuthApi
 import com.mustafaderinoz.data.util.runCatchingApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class AuthRepositoryImpl(
-    private val authApi: AuthApi
+    private val authApi: AuthApi,
+    private val tokenStore: TokenStore
 ) : AuthRepository {
-    override val isLoggedIn: Flow<Boolean>
-        get() = TODO("Not yet implemented")
+    override val isLoggedIn: Flow<Boolean> = tokenStore.accessToken.map { it != null }
 
     override suspend fun login(
         email: String,
@@ -21,6 +23,7 @@ class AuthRepositoryImpl(
     ): Result<AuthSession> = runCatchingApi {
         authApi.login(CredentialsDto(email=email, password=password))
     }.onSuccess {
+        tokenStore.save(it.accessToken, it.refreshToken)
         // jwt'i bi yere yaz..
     }
         .map {

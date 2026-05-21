@@ -1,6 +1,7 @@
 package com.mustafaderinoz.data.di
 
 import com.mustafaderinoz.core.domain.AuthRepository
+import com.mustafaderinoz.data.local.TokenStore
 import com.mustafaderinoz.data.remote.AuthApi
 import com.mustafaderinoz.data.repository.AuthRepositoryImpl
 import kotlinx.serialization.json.Json
@@ -33,6 +34,9 @@ val dataModule = module {
             level = HttpLoggingInterceptor.Level.BODY
         }
     }
+    single {
+        TokenStore(context=get())
+    }
 
     // HTTP isteklerini yönetmek..
     single {
@@ -53,7 +57,8 @@ val dataModule = module {
 
     single<AuthRepository> {
         AuthRepositoryImpl(
-            authApi = get()
+            authApi = get(),
+            tokenStore = get()
         )
     }
 
