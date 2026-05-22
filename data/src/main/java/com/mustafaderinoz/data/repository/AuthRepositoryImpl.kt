@@ -1,10 +1,10 @@
 package com.mustafaderinoz.data.repository
 
-import com.mustafaderinoz.core.domain.AuthRepository
-import com.mustafaderinoz.core.domain.AuthSession
-import com.mustafaderinoz.core.domain.User
-import com.mustafaderinoz.core.domain.UserRole
-import com.mustafaderinoz.data.dto.CredentialsDto
+import com.mustafaderinoz.core.domain.auth.AuthRepository
+import com.mustafaderinoz.core.domain.auth.AuthSession
+import com.mustafaderinoz.core.domain.auth.User
+import com.mustafaderinoz.core.domain.auth.UserRole
+import com.mustafaderinoz.data.dto.auth.CredentialsDto
 import com.mustafaderinoz.data.local.TokenStore
 import com.mustafaderinoz.data.remote.AuthApi
 import com.mustafaderinoz.data.util.runCatchingApi

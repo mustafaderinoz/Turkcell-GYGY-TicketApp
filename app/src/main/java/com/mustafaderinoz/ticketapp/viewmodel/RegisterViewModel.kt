@@ -1,7 +1,7 @@
 package com.mustafaderinoz.ticketapp.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mustafaderinoz.core.domain.AuthRepository
+import com.mustafaderinoz.core.domain.auth.AuthRepository
 import com.mustafaderinoz.data.network.ApiException
 import com.mustafaderinoz.data.network.NetworkException
 import kotlinx.coroutines.flow.MutableStateFlow

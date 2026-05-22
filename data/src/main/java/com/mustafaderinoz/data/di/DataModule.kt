@@ -1,11 +1,14 @@
 package com.mustafaderinoz.data.di
 
-import com.mustafaderinoz.core.domain.AuthRepository
+import com.mustafaderinoz.core.domain.auth.AuthRepository
+import com.mustafaderinoz.core.domain.event.EventRepository
 import com.mustafaderinoz.data.local.TokenStore
 import com.mustafaderinoz.data.network.AuthInterceptor
 import com.mustafaderinoz.data.network.TokenAuthenticator
 import com.mustafaderinoz.data.remote.AuthApi
+import com.mustafaderinoz.data.remote.EventApi
 import com.mustafaderinoz.data.repository.AuthRepositoryImpl
+import com.mustafaderinoz.data.repository.EventRepositoryImpl
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -50,7 +53,6 @@ val dataModule = module {
             tokenStore = get(),
             refreshApiProvider = { get(REFRESH_API) }
             //refreshApiProvider = get(REFRESH_API)
-
         )
     }
     // Refresh Stack
@@ -94,12 +96,20 @@ val dataModule = module {
     single {
         get<Retrofit>().create(AuthApi::class.java)
     }
+    single {
+        get<Retrofit>().create(EventApi::class.java)
+    }
 
 
     single<AuthRepository> {
         AuthRepositoryImpl(
             authApi = get(),
             tokenStore = get()
+        )
+    }
+    single<EventRepository> {
+        EventRepositoryImpl(
+           eventApi = get()
         )
     }
 

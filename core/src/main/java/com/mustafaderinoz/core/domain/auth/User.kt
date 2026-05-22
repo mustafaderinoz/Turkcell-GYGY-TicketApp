@@ -1,3 +1,3 @@
-package com.mustafaderinoz.core.domain
+package com.mustafaderinoz.core.domain.auth
 
 data class User(val id: String, val email:String, val role: UserRole) {}

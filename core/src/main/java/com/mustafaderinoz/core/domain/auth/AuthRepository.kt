@@ -1,4 +1,4 @@
-package com.mustafaderinoz.core.domain
+package com.mustafaderinoz.core.domain.auth
 
 import kotlinx.coroutines.flow.Flow
 

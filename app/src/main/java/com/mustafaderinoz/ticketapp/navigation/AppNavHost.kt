@@ -13,7 +13,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.mustafaderinoz.core.domain.AuthRepository
+import com.mustafaderinoz.core.domain.auth.AuthRepository
+import com.mustafaderinoz.ticketapp.screen.HomeScreen
 import com.mustafaderinoz.ticketapp.screen.LoginScreen
 import com.mustafaderinoz.ticketapp.screen.RegisterScreen
 import org.koin.compose.koinInject
@@ -49,7 +50,7 @@ private fun SplashScreen(){
 private fun AuthedNavHost(navController: NavHostController){
     NavHost(navController=navController, startDestination = Home){
         composable<Home> {
-            Text("Ana Sayfa")
+            HomeScreen()
         }
     }
 }

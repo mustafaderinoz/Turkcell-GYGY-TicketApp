@@ -1,6 +1,6 @@
 package com.mustafaderinoz.data.network
 
-import com.mustafaderinoz.data.dto.RefreshRequestDto
+import com.mustafaderinoz.data.dto.auth.RefreshRequestDto
 import com.mustafaderinoz.data.local.TokenStore
 import com.mustafaderinoz.data.remote.AuthApi
 import kotlinx.coroutines.runBlocking

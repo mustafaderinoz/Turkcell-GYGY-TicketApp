@@ -1,4 +1,4 @@
-package com.mustafaderinoz.data.dto
+package com.mustafaderinoz.data.dto.auth
 
 
 import kotlinx.serialization.Serializable
