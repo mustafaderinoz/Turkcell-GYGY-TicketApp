@@ -2,13 +2,16 @@ package com.mustafaderinoz.data.di
 
 import com.mustafaderinoz.core.domain.auth.AuthRepository
 import com.mustafaderinoz.core.domain.event.EventRepository
+import com.mustafaderinoz.core.domain.ticket.TicketRepository
 import com.mustafaderinoz.data.local.TokenStore
 import com.mustafaderinoz.data.network.AuthInterceptor
 import com.mustafaderinoz.data.network.TokenAuthenticator
 import com.mustafaderinoz.data.remote.AuthApi
 import com.mustafaderinoz.data.remote.EventApi
+import com.mustafaderinoz.data.remote.TicketApi
 import com.mustafaderinoz.data.repository.AuthRepositoryImpl
 import com.mustafaderinoz.data.repository.EventRepositoryImpl
+import com.mustafaderinoz.data.repository.TicketRepositoryImpl
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -99,6 +102,9 @@ val dataModule = module {
     single {
         get<Retrofit>().create(EventApi::class.java)
     }
+    single {
+        get<Retrofit>().create(TicketApi::class.java)
+    }
 
 
     single<AuthRepository> {
@@ -111,6 +117,9 @@ val dataModule = module {
         EventRepositoryImpl(
            eventApi = get()
         )
+    }
+    single<TicketRepository> {
+        TicketRepositoryImpl(ticketApi = get())
     }
 
     // factory -> Her çağırıldığı noktada yeni instance üretir. Her fonksiyon için birer örnek

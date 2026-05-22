@@ -13,4 +13,9 @@ object TicketUtils {
 
     fun totalRemaining(ticketTypes: List<TicketType>): Long =
         ticketTypes.sumOf { it.remaining }
+
+    fun formatPrice(priceCents: Long): String {
+        val amount = priceCents / 100.0
+        return if (amount == 0.0) "Ücretsiz" else "₺%.2f".format(amount)
+    }
 }

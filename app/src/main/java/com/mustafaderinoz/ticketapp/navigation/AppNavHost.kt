@@ -1,5 +1,7 @@
 package com.mustafaderinoz.ticketapp.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -13,11 +15,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.mustafaderinoz.core.domain.auth.AuthRepository
 import com.mustafaderinoz.ticketapp.screen.HomeScreen
 import com.mustafaderinoz.ticketapp.screen.LoginScreen
 import com.mustafaderinoz.ticketapp.screen.RegisterScreen
+import com.mustafaderinoz.ticketapp.screen.TicketDetailScreen
 import org.koin.compose.koinInject
+
 
 
 
@@ -46,14 +51,27 @@ private fun SplashScreen(){
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-private fun AuthedNavHost(navController: NavHostController){
-    NavHost(navController=navController, startDestination = Home){
+private fun AuthedNavHost(navController: NavHostController) {
+    NavHost(navController = navController, startDestination = Home) {
         composable<Home> {
-            HomeScreen()
+            HomeScreen(
+                onNavigateToTicketDetail = { ticketId ->
+                    navController.navigate(TicketDetail(ticketId))
+                }
+            )
+        }
+        composable<TicketDetail> { backStackEntry ->
+            val args = backStackEntry.toRoute<TicketDetail>()
+            TicketDetailScreen(
+                ticketId = args.ticketId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }
+
 
 @Composable
 private fun UnAuthedNavHost(navController: NavHostController){

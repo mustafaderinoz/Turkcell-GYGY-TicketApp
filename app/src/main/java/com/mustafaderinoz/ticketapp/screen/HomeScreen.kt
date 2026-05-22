@@ -7,8 +7,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DateRange
@@ -18,7 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mustafaderinoz.core.domain.event.Event
+import com.mustafaderinoz.core.domain.ticket.PurchasedTicket
 import com.mustafaderinoz.core.util.DateTimeUtils
 import com.mustafaderinoz.core.util.TicketUtils
 import com.mustafaderinoz.ticketapp.viewmodel.HomeViewModel
@@ -34,32 +37,105 @@ import org.koin.androidx.compose.koinViewModel
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(
+    onNavigateToTicketDetail: (String) -> Unit = {},
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
                 .padding(vertical = 24.dp)
         ) {
-            Text(
-                text = "Yaklaşan Etkinlikler",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 30.dp)
-            )
+            SectionHeader(title = "Yaklaşan Etkinlikler")
             Spacer(Modifier.height(16.dp))
-            EventsRow(isLoading = state.isEventsLoading, error = state.eventsError, events = state.events)
-            Spacer(Modifier.height(24.dp))
-            Text(
-                text = "Satın Alınmış Biletler",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 30.dp)
+            EventsRow(
+                isLoading = state.isEventsLoading,
+                error = state.eventsError,
+                events = state.events
             )
+
+            Spacer(Modifier.height(32.dp))
+
+            SectionHeader(title = "Satın Alınmış Biletler")
+            Spacer(Modifier.height(16.dp))
+            TicketsColumn(
+                isLoading = state.isTicketsLoading,
+                error = state.ticketsError,
+                tickets = state.tickets,
+                onTicketClick = onNavigateToTicketDetail
+            )
+
         }
     }
 }
+
+
+// Bölüm başlıklarını (ör. "Yaklaşan Etkinlikler") göstermek için kullanılan özel metin bileşeni.
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onBackground,
+        modifier = Modifier.padding(horizontal = 24.dp)
+    )
+}
+// İkon ve metni yan yana, hizalı bir şekilde gösteren yardımcı bileşen (ör. konum bilgisi için).
+@Composable
+private fun IconTextRow(
+    icon: ImageVector,
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+// Olumlu (ör. "Kaldı") veya olumsuz (ör. "Tükendi") durumlara göre renk değiştiren durum etiketi.
+@Composable
+private fun StatusPill(text: String, isPositive: Boolean) {
+
+    val containerColor = if (isPositive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
+    val contentColor = if (isPositive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
+
+    Surface(
+        shape = CircleShape,
+        color = containerColor
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = contentColor,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+        )
+    }
+}
+
+// Etkinlikleri yatayda kaydırılabilir şekilde (LazyRow) gösteren, yüklenme ve hata durumlarını yöneten liste.
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -71,36 +147,28 @@ private fun EventsRow(
     when {
         isLoading -> {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp),
+                modifier = Modifier.fillMaxWidth().height(250.dp),
                 contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            ) { CircularProgressIndicator() }
         }
         error != null -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 30.dp)
-            ) {
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
                 Text(text = error, color = MaterialTheme.colorScheme.error)
             }
         }
         events.isEmpty() -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 30.dp)
-            ) {
-                Text(text = "Şimdilik hiçbir etkinlik yok.", style = MaterialTheme.typography.bodyMedium)
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+                Text(
+                    text = "Şimdilik hiçbir etkinlik yok.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
         else -> {
             LazyRow(
-                contentPadding = PaddingValues(horizontal = 30.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp) // Kartlar arası boşluk
+                contentPadding = PaddingValues(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(items = events, key = { it.id }) { event ->
                     EventCard(event)
@@ -109,72 +177,55 @@ private fun EventsRow(
         }
     }
 }
-
+// Tek bir etkinliğin adı, konumu, tarihi ve fiyatı gibi detaylarını gösteren kart tasarımı.
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun EventCard(event: Event) {
-    val initial = event.name.firstOrNull { it.isLetter() } ?: '?'
+    val initial = event.name.firstOrNull { it.isLetter() }?.uppercaseChar() ?: '?'
     val remaining = TicketUtils.totalRemaining(event.ticketTypes)
+    val isAvailable = remaining > 0
 
     Card(
-        modifier = Modifier
-            .width(260.dp)
-            .wrapContentHeight(),
+        modifier = Modifier.width(300.dp),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            // ── Üst: Baş harf banner (Sabit Renkli)
+            // Header Image/Banner
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(130.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer), // Sabit arka plan rengi
+                    .height(140.dp)
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = initial.uppercaseChar().toString(),
+                    text = initial.toString(),
                     style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer // Sabit yazı rengi
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
 
-            // ── Alt: Bilgiler ──────────────────────────────────────────────
+            // Content
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Etkinlik adı
                 Text(
                     text = event.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // Mekan
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Outlined.LocationOn,
-                        contentDescription = null,
-                        modifier = Modifier.size(13.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.width(3.dp))
-                    Text(
-                        text = event.venue,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                IconTextRow(icon = Icons.Outlined.LocationOn, text = event.venue)
 
-                // Açıklama
                 Text(
                     text = event.description,
                     style = MaterialTheme.typography.bodySmall,
@@ -184,53 +235,36 @@ private fun EventCard(event: Event) {
                     lineHeight = 18.sp
                 )
 
-                Spacer(Modifier.height(4.dp))
-                HorizontalDivider(thickness = 0.5.dp)
-                Spacer(Modifier.height(4.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 0.5.dp)
 
-                // Tarih & saat badge'leri
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    DateBadge(
-                        icon = Icons.Outlined.DateRange,
-                        label = DateTimeUtils.formatDate(event.startsAt)
-                    )
+                // Dates
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DateBadge(icon = Icons.Outlined.DateRange, label = DateTimeUtils.formatDate(event.startsAt))
                     DateBadge(
                         icon = Icons.Outlined.CheckCircle,
                         label = "${DateTimeUtils.formatTime(event.startsAt)} – ${DateTimeUtils.formatTime(event.endsAt)}"
                     )
                 }
 
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(4.dp))
 
-                // Alt satır: Kalan bilet + fiyat
+                // Footer (Status & Price)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val (pillBg, pillText) = if (remaining > 0)
-                        Color(0xFFEAF3DE) to Color(0xFF27500A)
-                    else
-                        Color(0xFFFCEBEB) to Color(0xFF791F1F)
-
-                    Surface(
-                        shape = CircleShape,
-                        color = pillBg
-                    ) {
-                        Text(
-                            text = if (remaining > 0) "$remaining kaldı" else "Tükendi",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = pillText,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                        )
-                    }
+                    StatusPill(
+                        text = if (isAvailable) "$remaining kaldı" else "Tükendi",
+                        isPositive = isAvailable
+                    )
 
                     TicketUtils.minPriceLabel(event.ticketTypes)?.let { label ->
                         Text(
                             text = label,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -238,29 +272,156 @@ private fun EventCard(event: Event) {
         }
     }
 }
-
+// Tarih ve saat gibi verileri vurgulamak için kullanılan, ikonlu küçük rozet.
 @Composable
 private fun DateBadge(icon: ImageVector, label: String) {
     Surface(
-        shape = RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(11.dp),
+                modifier = Modifier.size(12.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
             )
+        }
+    }
+}
+
+// Satın alınan biletleri alt alta listeleyen, yüklenme ve hata durumlarını yöneten bileşen.
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+private fun TicketsColumn(
+    isLoading: Boolean,
+    error: String?,
+    tickets: List<PurchasedTicket>,
+    onTicketClick: (String) -> Unit,
+) {
+    when {
+        isLoading -> {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(120.dp),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator() }
+        }
+        error != null -> {
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+                Text(text = error, color = MaterialTheme.colorScheme.error)
+            }
+        }
+        tickets.isEmpty() -> {
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+                Text(
+                    text = "Henüz satın alınmış bilet yok.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        else -> {
+            Column(
+                modifier = Modifier.padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                tickets.forEach { ticket ->
+                    PurchasedTicketCard(ticket = ticket, onClick = { onTicketClick(ticket.id) })
+                }
+            }
+        }
+    }
+}
+// Kullanıcının satın aldığı tek bir biletin bilgilerini ve geçerlilik durumunu gösteren tıklanabilir kart.
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+private fun PurchasedTicketCard(
+    ticket: PurchasedTicket,
+    onClick: () -> Unit,
+) {
+    val isValid = ticket.status == "VALID"
+
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // QR Icon
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            // Ticket Info
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = ticket.eventName.ifBlank { "Etkinlik bilgisi yükleniyor..." },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (ticket.ticketTypeName.isNotBlank()) {
+                    Text(
+                        text = ticket.ticketTypeName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                if (ticket.eventVenue.isNotBlank()) {
+                    IconTextRow(icon = Icons.Outlined.LocationOn, text = ticket.eventVenue)
+                }
+            }
+
+            // Status & Price
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                StatusPill(text = ticket.status, isPositive = isValid)
+
+                if (ticket.ticketTypePriceCents > 0L) {
+                    Text(
+                        text = TicketUtils.formatPrice(ticket.ticketTypePriceCents),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
         }
     }
 }

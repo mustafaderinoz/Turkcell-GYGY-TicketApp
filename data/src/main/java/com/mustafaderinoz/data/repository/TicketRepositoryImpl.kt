@@ -1,0 +1,16 @@
+package com.mustafaderinoz.data.repository
+
+import com.mustafaderinoz.core.domain.ticket.TicketRepository
+import com.mustafaderinoz.core.domain.ticket.PurchasedTicket
+import com.mustafaderinoz.data.mapper.toDomain
+import com.mustafaderinoz.data.remote.TicketApi
+
+internal class TicketRepositoryImpl(
+    private val ticketApi: TicketApi
+) : TicketRepository {
+
+    override suspend fun getPurchasedTickets(): Result<List<PurchasedTicket>> =
+        runCatching {
+            ticketApi.getPurchasedTickets().map { it.toDomain() }
+        }
+}
