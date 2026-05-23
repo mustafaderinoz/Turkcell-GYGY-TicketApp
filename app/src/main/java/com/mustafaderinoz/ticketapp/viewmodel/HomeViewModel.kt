@@ -6,6 +6,7 @@ import com.mustafaderinoz.core.domain.event.Event
 import com.mustafaderinoz.core.domain.event.EventRepository
 import com.mustafaderinoz.core.domain.ticket.PurchasedTicket
 import com.mustafaderinoz.core.domain.ticket.TicketRepository
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +38,7 @@ class HomeViewModel(
 
     fun loadData() {
         viewModelScope.launch {
+            // 1. Loading durumunu başlat
             _state.update {
                 it.copy(
                     isEventsLoading = true,
@@ -46,55 +48,60 @@ class HomeViewModel(
                 )
             }
 
-            // 1. Önce etkinlikleri çekiyoruz
-            eventRepository.getEvents().fold(
-                onSuccess = { eventList ->
-                    _state.update { it.copy(events = eventList, isEventsLoading = false) }
+            // 2. Verileri Paralel Çek
+            val eventsDeferred = async { eventRepository.getEvents() }
+            val ticketsDeferred = async { ticketRepository.getPurchasedTickets() }
 
-                    // 2. Etkinlikler başarıyla geldikten SONRA biletleri çekiyoruz
-                    loadTicketsEnrichedWith(eventList)
-                },
-                onFailure = { e ->
-                    _state.update {
-                        it.copy(
-                            isEventsLoading = false,
-                            eventsError = e.message ?: "Etkinlikler yüklenemedi.",
-                            isTicketsLoading = false // Etkinlik yoksa biletleri bekletmeyi de iptal et
-                        )
-                    }
-                }
-            )
-        }
-    }
+            val eventsResult = eventsDeferred.await()
+            val ticketsResult = ticketsDeferred.await()
 
-    private suspend fun loadTicketsEnrichedWith(events: List<Event>) {
-        ticketRepository.getPurchasedTickets().fold(
-            onSuccess = { list ->
-                // Artık "events" listesinin dolu olduğundan %100 eminiz
-                val enriched = list.map { ticket ->
-                    val event = events.find { e ->
-                        e.ticketTypes.any { tt -> tt.id == ticket.ticketTypeId }
-                    }
-                    val ticketType = event?.ticketTypes?.find { it.id == ticket.ticketTypeId }
+
+            val events = eventsResult.getOrNull()
+            val eventsError = eventsResult.exceptionOrNull()?.message
+                ?: if (eventsResult.isFailure) "Etkinlikler yüklenemedi." else null
+
+            val tickets = ticketsResult.getOrNull()
+            val ticketsError = ticketsResult.exceptionOrNull()?.message
+                ?: if (ticketsResult.isFailure) "Biletler yüklenemedi." else null
+
+
+            val finalTickets = if (events != null && tickets != null) {
+
+
+                val ticketTypeToEventMap = events.flatMap { event ->
+                    event.ticketTypes.map { it.id to event }
+                }.toMap()
+
+                val ticketTypeMap = events.flatMap { it.ticketTypes }.associateBy { it.id }
+
+                tickets.map { ticket ->
+                    val event = ticketTypeToEventMap[ticket.ticketTypeId]
+                    val ticketType = ticketTypeMap[ticket.ticketTypeId]
 
                     ticket.copy(
-                        eventName     = event?.name     ?: "",
-                        eventVenue    = event?.venue    ?: "",
+                        eventName = event?.name ?: "",
+                        eventVenue = event?.venue ?: "",
                         eventStartsAt = event?.startsAt ?: "",
-                        ticketTypeName        = ticketType?.name           ?: "",
-                        ticketTypePriceCents  = ticketType?.priceCents     ?: 0L,
+                        ticketTypeName = ticketType?.name ?: "",
+                        ticketTypePriceCents = ticketType?.priceCents ?: 0L,
                     )
                 }
-                _state.update { it.copy(tickets = enriched, isTicketsLoading = false) }
-            },
-            onFailure = { e ->
-                _state.update {
-                    it.copy(
-                        isTicketsLoading = false,
-                        ticketsError = e.message ?: "Biletler yüklenemedi."
-                    )
-                }
+            } else {
+                tickets ?: emptyList() // Eventler başarısızsa
             }
-        )
+
+            // 5. State'i TEK SEFERDE Güncelle
+            _state.update {
+                it.copy(
+                    isEventsLoading = false,
+                    events = events ?: emptyList(),
+                    eventsError = eventsError,
+
+                    isTicketsLoading = false,
+                    tickets = finalTickets,
+                    ticketsError = ticketsError
+                )
+            }
+        }
     }
 }
