@@ -26,27 +26,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.mustafaderinoz.core.domain.ticket.PurchasedTicket
+import com.mustafaderinoz.core.domain.ticket.PurchasedTicketUi
 import com.mustafaderinoz.core.util.DateTimeUtils
 import com.mustafaderinoz.core.util.TicketUtils
-import com.mustafaderinoz.ticketapp.viewmodel.HomeViewModel
+import com.mustafaderinoz.ticketapp.viewmodel.TicketDetailViewModel
 import org.koin.androidx.compose.koinViewModel
 
-/**
- * Detay ekranı için ayrı bir ViewModel yazmaya gerek yok:
- * HomeViewModel'deki state içinde bilet zaten var.
- * ticketId ile listeden filtreliyoruz — Event gibi aynı mantık.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TicketDetailScreen(
-    ticketId: String,
     onNavigateBack: () -> Unit,
-    viewModel: HomeViewModel = koinViewModel(),
+    viewModel: TicketDetailViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val ticket = state.tickets.find { it.id == ticketId }
+    val ticket = state.ticket
+
 
     Scaffold(
         topBar = {
@@ -93,7 +88,7 @@ fun TicketDetailScreen(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun TicketDetailContent(
-    ticket: PurchasedTicket,
+    ticket: PurchasedTicketUi,
     modifier: Modifier = Modifier,
 ) {
     val isValid = ticket.status == "VALID"

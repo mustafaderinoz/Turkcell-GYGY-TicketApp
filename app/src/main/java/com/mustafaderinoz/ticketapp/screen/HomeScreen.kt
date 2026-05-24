@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mustafaderinoz.core.domain.event.Event
-import com.mustafaderinoz.core.domain.ticket.PurchasedTicket
+import com.mustafaderinoz.core.domain.ticket.PurchasedTicketUi
 import com.mustafaderinoz.core.util.DateTimeUtils
 import com.mustafaderinoz.core.util.TicketUtils
 import com.mustafaderinoz.ticketapp.viewmodel.HomeViewModel
@@ -307,7 +307,7 @@ private fun DateBadge(icon: ImageVector, label: String) {
 private fun TicketsColumn(
     isLoading: Boolean,
     error: String?,
-    tickets: List<PurchasedTicket>,
+    tickets: List<PurchasedTicketUi>,
     onTicketClick: (String) -> Unit,
 ) {
     when {
@@ -337,7 +337,7 @@ private fun TicketsColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 tickets.forEach { ticket ->
-                    PurchasedTicketCard(ticket = ticket, onClick = { onTicketClick(ticket.id) })
+                    PurchasedTicketCard(ticket =ticket, onClick = { onTicketClick(ticket.id) })
                 }
             }
         }
@@ -347,7 +347,7 @@ private fun TicketsColumn(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun PurchasedTicketCard(
-    ticket: PurchasedTicket,
+    ticket: PurchasedTicketUi,
     onClick: () -> Unit,
 ) {
     val isValid = ticket.status == "VALID"

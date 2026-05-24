@@ -5,7 +5,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -15,13 +14,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.mustafaderinoz.core.domain.auth.AuthRepository
 import com.mustafaderinoz.ticketapp.screen.HomeScreen
 import com.mustafaderinoz.ticketapp.screen.LoginScreen
 import com.mustafaderinoz.ticketapp.screen.RegisterScreen
 import com.mustafaderinoz.ticketapp.screen.TicketDetailScreen
 import org.koin.compose.koinInject
+
 
 
 
@@ -62,10 +61,8 @@ private fun AuthedNavHost(navController: NavHostController) {
                 }
             )
         }
-        composable<TicketDetail> { backStackEntry ->
-            val args = backStackEntry.toRoute<TicketDetail>()
+        composable<TicketDetail> {
             TicketDetailScreen(
-                ticketId = args.ticketId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

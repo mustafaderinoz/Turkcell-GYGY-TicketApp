@@ -13,4 +13,9 @@ internal class TicketRepositoryImpl(
         runCatching {
             ticketApi.getPurchasedTickets().map { it.toDomain() }
         }
+
+    override suspend fun getTicketById(id: String): Result<PurchasedTicket> =
+        runCatching {
+            ticketApi.getTicketById(id).toDomain()
+        }
 }

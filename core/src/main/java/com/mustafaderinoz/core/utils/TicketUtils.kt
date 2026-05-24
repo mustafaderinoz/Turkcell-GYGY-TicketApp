@@ -10,7 +10,6 @@ object TicketUtils {
         return "₺${tl.toLong()}'den başlayan"
     }
 
-
     fun totalRemaining(ticketTypes: List<TicketType>): Long =
         ticketTypes.sumOf { it.remaining }
 
